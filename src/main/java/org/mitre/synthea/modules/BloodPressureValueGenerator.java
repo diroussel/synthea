@@ -152,8 +152,9 @@ public class BloodPressureValueGenerator extends ValueGenerator {
       person.attributes.put("htn_drug_impacts", personalDrugImpacts);
     }
 
-    if (personalDrugImpacts.contains(drug, sysDias)) {
-      return personalDrugImpacts.get(drug, sysDias);
+    Double value = personalDrugImpacts.get(drug, sysDias);
+    if (value != null) {
+      return value;
     }
 
     // note these are intentionally flipped. "max impact" == lower number, since these are negative

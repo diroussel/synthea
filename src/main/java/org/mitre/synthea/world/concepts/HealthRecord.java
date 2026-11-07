@@ -1628,7 +1628,8 @@ public class HealthRecord implements Serializable {
    * @return true if the medication exists and does not have a specified stop time, false otherwise
    */
   public boolean medicationActive(String type) {
-    return present.containsKey(type) && ((Medication) present.get(type)).stop == 0L;
+    Entry entry = present.get(type);
+    return entry != null && entry.stop == 0L;
   }
 
   /**
