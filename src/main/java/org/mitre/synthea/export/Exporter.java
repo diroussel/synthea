@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -337,37 +338,50 @@ public abstract class Exporter {
     }
     if (Config.getAsBoolean("exporter.fhir.export")) {
       File outDirectory = getOutputFolder("fhir", person);
-      org.hl7.fhir.r4.model.Bundle bundle = FhirR4.convertToFHIR(person, stopTime);
-
-      if (options.flexporterMappings != null) {
-        FlexporterJavascriptContext fjContext = null;
-
-        for (Mapping mapping : options.flexporterMappings) {
-          if (FhirPathUtils.appliesToBundle(bundle, mapping.applicability, mapping.variables)) {
-            if (fjContext == null) {
-              // only set this the first time it is actually used
-              // TODO: figure out how to silence the truffle warnings
-              fjContext = new FlexporterJavascriptContext();
-            }
-            bundle = Actions.applyMapping(bundle, mapping, person, fjContext);
-          }
-        }
-      }
-
-      IParser parser = FhirR4.getContext().newJsonParser();
-      if (Config.getAsBoolean("exporter.fhir.bulk_data")) {
-        parser.setPrettyPrint(false);
-        for (org.hl7.fhir.r4.model.Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-          String filename = entry.getResource().getResourceType().toString() + ".ndjson";
-          Path outFilePath = outDirectory.toPath().resolve(filename);
-          String entryJson = parser.encodeResourceToString(entry.getResource());
-          appendToFile(outFilePath, entryJson);
+      if (Config.getAsBoolean("exporter.fhir.direct_json", false)
+          && !Config.getAsBoolean("exporter.fhir.bulk_data")
+          && options.flexporterMappings == null) {
+        Path path = outDirectory.toPath().resolve(filename(person, fileTag, "json"));
+        try (BufferedWriter output = Files.newBufferedWriter(path, StandardCharsets.UTF_8,
+            StandardOpenOption.CREATE_NEW)) {
+          FhirR4.writeDirectJson(person, stopTime, output, true);
+          output.newLine();
+        } catch (IOException e) {
+          e.printStackTrace();
         }
       } else {
-        parser.setPrettyPrint(true);
-        String bundleJson = parser.encodeResourceToString(bundle);
-        Path outFilePath = outDirectory.toPath().resolve(filename(person, fileTag, "json"));
-        writeNewFile(outFilePath, bundleJson);
+        org.hl7.fhir.r4.model.Bundle bundle = FhirR4.convertToFHIR(person, stopTime);
+
+        if (options.flexporterMappings != null) {
+          FlexporterJavascriptContext fjContext = null;
+
+          for (Mapping mapping : options.flexporterMappings) {
+            if (FhirPathUtils.appliesToBundle(bundle, mapping.applicability, mapping.variables)) {
+              if (fjContext == null) {
+                // only set this the first time it is actually used
+                // TODO: figure out how to silence the truffle warnings
+                fjContext = new FlexporterJavascriptContext();
+              }
+              bundle = Actions.applyMapping(bundle, mapping, person, fjContext);
+            }
+          }
+        }
+
+        IParser parser = FhirR4.getContext().newJsonParser();
+        if (Config.getAsBoolean("exporter.fhir.bulk_data")) {
+          parser.setPrettyPrint(false);
+          for (org.hl7.fhir.r4.model.Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+            String filename = entry.getResource().getResourceType().toString() + ".ndjson";
+            Path outFilePath = outDirectory.toPath().resolve(filename);
+            String entryJson = parser.encodeResourceToString(entry.getResource());
+            appendToFile(outFilePath, entryJson);
+          }
+        } else {
+          parser.setPrettyPrint(true);
+          String bundleJson = parser.encodeResourceToString(bundle);
+          Path outFilePath = outDirectory.toPath().resolve(filename(person, fileTag, "json"));
+          writeNewFile(outFilePath, bundleJson);
+        }
       }
       FhirGroupExporterR4.addPatient((String) person.attributes.get(Person.ID));
     }
