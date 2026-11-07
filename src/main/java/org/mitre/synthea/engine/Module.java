@@ -36,6 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.mitre.synthea.helpers.Config;
 import org.mitre.synthea.helpers.TransitionMetrics;
@@ -266,15 +268,19 @@ public class Module implements Cloneable, Serializable {
    *     supplied predicate. Submodules are loaded, but not included.
    */
   public static List<Module> getModules(Predicate<String> pathPredicate) {
-    List<Module> list = new ArrayList<Module>();
-    modules.forEach((k, v) -> {
-      if (v.submodule) {
-        v.get(); // ensure submodules get loaded
-      } else if (v.core || pathPredicate.test(v.path)) {
-        list.add(v.get());
-      }
-    });
-    return list;
+    List<ModuleSupplier> suppliers =
+        getModuleSuppliers(v -> v.submodule || v.core || pathPredicate.test(v.path));
+    Stream<ModuleSupplier> stream;
+    // Parallelize initial loading, but avoid parallel overhead when cloning cached modules.
+    if (suppliers.stream().anyMatch(v -> !v.loaded)) {
+      stream = suppliers.stream().parallel();
+    } else {
+      stream = suppliers.stream();
+    }
+    return stream
+        .map(ModuleSupplier::get)
+        .filter(module -> !module.submodule)
+        .collect(Collectors.toList());
   }
 
   /**
@@ -526,7 +532,7 @@ public class Module implements Cloneable, Serializable {
     /** The file path of the module. */
     public final String path;
 
-    private boolean loaded;
+    private volatile boolean loaded;
     private Callable<Module> loader;
     private Module module;
     private Throwable fault;

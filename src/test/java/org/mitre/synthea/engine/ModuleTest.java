@@ -23,11 +23,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -50,6 +50,55 @@ public class ModuleTest {
     assertTrue(allModules.stream().anyMatch(filterOnModuleName("COPD")));
     assertTrue(someModules.stream().anyMatch(filterOnModuleName("Dermatitis")));
     assertFalse(someModules.stream().anyMatch(filterOnModuleName("COPD")));
+  }
+
+  @Test
+  public void getModulesLoadsFilteredModulesAndSubmodulesOnce() throws Exception {
+    String selectedPath = "test/module_loading/selected";
+    String skippedPath = "test/module_loading/skipped";
+    String submodulePath = "test/module_loading/submodule";
+    Module selected = new Module();
+    selected.name = "Selected test module";
+    Module submodule = new Module();
+    submodule.name = "Test submodule";
+    submodule.submodule = true;
+    AtomicInteger selectedLoads = new AtomicInteger();
+    AtomicInteger submoduleLoads = new AtomicInteger();
+    Thread caller = Thread.currentThread();
+    Predicate<String> predicate = path -> {
+      assertSame(caller, Thread.currentThread());
+      assertFalse(path.startsWith("core/"));
+      assertFalse(path.equals(submodulePath));
+      return path.equals(selectedPath);
+    };
+
+    Module.ModuleSupplier selectedSupplier = new Module.ModuleSupplier(false, selectedPath, () -> {
+      selectedLoads.incrementAndGet();
+      return selected;
+    });
+    Module.ModuleSupplier submoduleSupplier = new Module.ModuleSupplier(true, submodulePath, () -> {
+      submoduleLoads.incrementAndGet();
+      return submodule;
+    });
+    try (ModuleSupplierScope selectedScope = injectModuleSupplier(selectedSupplier);
+        ModuleSupplierScope submoduleScope = injectModuleSupplier(submoduleSupplier);
+        ModuleSupplierScope skippedScope = injectFaultIntoModuleLoad(skippedPath,
+            new IOException("Filtered module must not load"))) {
+      List<String> expectedNames = Module.getModuleSuppliers(
+          supplier -> supplier.core || supplier.path.equals(selectedPath)).stream()
+          .map(supplier -> supplier.core ? supplier.get().name : selected.name)
+          .collect(Collectors.toList());
+      for (int i = 0; i < 2; i++) {
+        List<Module> actual = Module.getModules(predicate);
+        assertEquals(expectedNames,
+            actual.stream().map(module -> module.name).collect(Collectors.toList()));
+        assertTrue(actual.stream().noneMatch(module -> module.submodule));
+        assertEquals(1, selectedLoads.get());
+        assertEquals(1, submoduleLoads.get());
+        // Callers depend on being able to remove completed modules from the returned list.
+        actual.clear();
+      }
+    }
   }
 
   /** Manually compare lists since the Modules are clones and not originals. */
@@ -185,7 +234,7 @@ public class ModuleTest {
   @Test
   public void getModuleByPath_badModule() throws Exception {
     IOException fault = new IOException("Deliberate failure");
-    try (FaultyModuleScope ignore = injectFaultIntoModuleLoad("bad_module", fault)) {
+    try (ModuleSupplierScope ignore = injectFaultIntoModuleLoad("bad_module", fault)) {
       Module.getModuleByPath("bad_module");
       fail("Expected getModuleByPath() to fail with a RuntimeException");
     } catch (RuntimeException e) {
@@ -235,15 +284,22 @@ public class ModuleTest {
   }
 
   /**
-   * Injects a fault into the lazy load of the specified module. A FaultyModuleScope object is
+   * Injects a fault into the lazy load of the specified module. A ModuleSupplierScope object is
    * returned for convenience with try-with-resources to ensure the module is put back the way it
    * was before we broke it.
    * @param path The module to inject a fault into. It does not need to presently exist.
    * @param fault The fault to inject.
-   * @return A FaultyModuleScope that restores the previous state for the specified module.
+   * @return A ModuleSupplierScope that restores the previous state for the specified module.
    * @throws Exception If something goes terribly wrong.
    */
-  private static FaultyModuleScope injectFaultIntoModuleLoad(String path, Exception fault)
+  private static ModuleSupplierScope injectFaultIntoModuleLoad(String path, Exception fault)
+      throws Exception {
+    return injectModuleSupplier(new Module.ModuleSupplier(false, path, () -> {
+      throw fault;
+    }));
+  }
+
+  private static ModuleSupplierScope injectModuleSupplier(Module.ModuleSupplier supplier)
       throws Exception {
     Field modulesField = Whitebox.getField(Module.class, "modules");
     modulesField.setAccessible(true);
@@ -251,22 +307,18 @@ public class ModuleTest {
     Map<String, Module.ModuleSupplier> modules =
             (Map<String, Module.ModuleSupplier>)modulesField.get(null);
 
-    // Store the old supplier and inject our "broken" one.
+    String path = supplier.path;
     Module.ModuleSupplier originalSupplier = modules.get(path);
-    Callable<Module> faultyCallable = () -> {
-      throw fault;
-    };
-    Module.ModuleSupplier faultySupplier = new Module.ModuleSupplier(false, path, faultyCallable);
-    modules.put(path, faultySupplier);
+    modules.put(path, supplier);
 
     // A runnable that safely puts everything back the way it was.
     AtomicBoolean runOnce = new AtomicBoolean();
     return () -> {
       if (runOnce.compareAndSet(false, true)) {
         if (originalSupplier == null) {
-          modules.remove(path, faultySupplier);
+          modules.remove(path, supplier);
         } else {
-          modules.replace(path, faultySupplier, originalSupplier);
+          modules.replace(path, supplier, originalSupplier);
         }
       }
     };
@@ -279,7 +331,7 @@ public class ModuleTest {
     };
   }
 
-  public interface FaultyModuleScope extends AutoCloseable {
+  public interface ModuleSupplierScope extends AutoCloseable {
     @Override
     void close();
   }
