@@ -258,8 +258,8 @@ public class ExpressedSymptom implements Cloneable, Serializable {
     for (Map.Entry<String, SymptomSource> entry : sources.entrySet()) {
       SymptomSource source = entry.getValue();
       Integer value = source.getCurrentValue();
-      if (value != null && value.intValue() > max && !source.isResolved()) {
-        max = value.intValue();
+      if (value != null && value > max && !source.isResolved()) {
+        max = value;
       }
     }
     return max;
