@@ -481,7 +481,7 @@ public class LogicTest {
 
   @Test
   public void test_prior_state() {
-    person.setHistory(new LinkedList<>());
+    person.history = new LinkedList<>();
     assertFalse(doTest("priorStateDoctorVisitTest"));
     assertFalse(doTest("priorStateCarePlanSinceDoctorVisitTest"));
     assertFalse(doTest("priorStateDoctorVisitWithin3YearsTest"));
@@ -490,7 +490,7 @@ public class LogicTest {
     State state = new State.Simple();
     state.name = "CarePlan";
     state.entered = state.exited = time;
-    person.getHistory().add(0, state);
+    person.history.add(0, state);
     assertFalse(doTest("priorStateDoctorVisitTest"));
     assertTrue(doTest("priorStateCarePlanSinceDoctorVisitTest"));
     assertFalse(doTest("priorStateDoctorVisitWithin3YearsTest"));
@@ -499,7 +499,7 @@ public class LogicTest {
     state = new State.Simple();
     state.name = "DoctorVisit";
     state.entered = state.exited = time;
-    person.getHistory().add(0, state);
+    person.history.add(0, state);
     assertTrue(doTest("priorStateDoctorVisitTest"));
     assertFalse(doTest("priorStateCarePlanSinceDoctorVisitTest"));
     assertTrue(doTest("priorStateDoctorVisitWithin3YearsTest"));
@@ -510,7 +510,7 @@ public class LogicTest {
     state = new State.Simple();
     state.name = "CarePlan";
     state.entered = state.exited = time;
-    person.getHistory().add(0, state);
+    person.history.add(0, state);
     assertTrue(doTest("priorStateDoctorVisitTest"));
     assertTrue(doTest("priorStateCarePlanSinceDoctorVisitTest"));
     assertTrue(doTest("priorStateDoctorVisitWithin3YearsTest"));

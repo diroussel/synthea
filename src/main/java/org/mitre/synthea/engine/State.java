@@ -303,7 +303,7 @@ public abstract class State implements Cloneable, Serializable {
     @Override
     public boolean process(Person person, long time) {
       // e.g. "submodule": "medications/otc_antihistamine"
-      List<State> parentHistory = person.getHistory();
+      List<State> parentHistory = person.history;
       Module submod = Module.getModuleByPath(submodule);
       if (submod == null) {
         throw new RuntimeException("Unknown submodule: " + submodule);
@@ -313,7 +313,7 @@ public abstract class State implements Cloneable, Serializable {
       // to act on encounters created using the same name.
       submod.name = module.name;
       boolean completed = submod.process(person, time);
-      List<State> submoduleHistory = person.getHistory();
+      List<State> submoduleHistory = person.history;
 
       if (completed) {
         // keep track of when the submodule exited,
@@ -336,13 +336,13 @@ public abstract class State implements Cloneable, Serializable {
         // clear the submodule history
         person.removeHistory(submod.submoduleName);
         // Restore the parent history after the submodule call.
-        person.setHistory(parentHistory);
+        person.history = parentHistory;
         // add this state to history to indicate we returned to this module
         parentHistory.add(0, this);
         return true;
       } else {
         // Restore the parent history after the submodule call.
-        person.setHistory(parentHistory);
+        person.history = parentHistory;
         // the submodule is still processing
         // next time we call this state it should pick up where it left off
         return false;
@@ -1060,7 +1060,7 @@ public abstract class State implements Cloneable, Serializable {
 
     private void diagnosePastConditions(Person person, long time) {
       // reminder: history[0] is current state, history[size-1] is Initial
-      for (State state : person.getHistory()) {
+      for (State state : person.history) {
         if (state instanceof OnsetState) {
           OnsetState onset = (OnsetState) state;
 

@@ -704,7 +704,7 @@ public class ActionsTest {
     b.addEntry().setResource(p);
 
     Person person = new Person(0L);
-    person.setHistory(new LinkedList<State>());
+    person.history = new LinkedList<State>();
     Module m = Module.getModuleByPath("sinusitis");
 
     // this is cheating but the alternative is to pick a seed that goes through this path
@@ -716,9 +716,9 @@ public class ActionsTest {
       s.entered = 120_000L;
       s.exited = 120_000L;
 
-      person.getHistory().add(0, s);
+      person.history.add(0, s);
     }
-    person.attributes.put(m.name, person.getHistory());
+    person.attributes.put(m.name, person.history);
 
 
     Map<String, Object> action = getActionByName("testCreateResources_createBasedOnState");

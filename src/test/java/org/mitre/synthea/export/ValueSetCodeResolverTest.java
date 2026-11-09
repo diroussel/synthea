@@ -12,6 +12,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -202,10 +203,10 @@ public class ValueSetCodeResolverTest {
     // a way to
     // instantiate it programmatically.
     Module module = TestHelper.getFixture("imaging_study_with_valueset.json");
-    person.setHistory(new ArrayList<>());
+    person.history = new ArrayList<>();
     State encounterState = module.getState("ED_Visit");
     assertTrue(encounterState.process(person, time));
-    person.getHistory().add(encounterState);
+      person.history.add(encounterState);
     State mri = module.getState("Knee_MRI");
     assertTrue(mri.process(person, time));
 
@@ -268,10 +269,10 @@ public class ValueSetCodeResolverTest {
     // a way to
     // instantiate it programmatically.
     Module module = TestHelper.getFixture("imaging_study_with_valueset.json");
-    person.setHistory(new ArrayList<>());
+    person.history = new ArrayList<>();
     State encounterState = module.getState("ED_Visit");
     assertTrue(encounterState.process(person, time));
-    person.getHistory().add(encounterState);
+      person.history.add(encounterState);
     State mri = module.getState("Knee_MRI");
     assertTrue(mri.process(person, time));
 

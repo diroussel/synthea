@@ -242,8 +242,7 @@ public class Person implements Serializable, RandomNumberGenerator, QuadTreeElem
    * In other words, the patients entire record is split across provider systems. */
   public boolean hasMultipleRecords;
   /** History of the currently active module. */
-  // Preserve the master snapshot field type and backing list identity.
-  private List<State> history;
+  public List<State> history;
   /** Record of insurance coverage. */
   public final CoverageRecord coverage;
 
@@ -660,22 +659,6 @@ public class Person implements Serializable, RandomNumberGenerator, QuadTreeElem
       return created;
     });
     return history;
-  }
-
-  /**
-   * Get the currently active module history.
-   * @return active history, or null before a module has been activated
-   */
-  public List<State> getHistory() {
-    return history;
-  }
-
-  /**
-   * Restore a history after processing a submodule.
-   * @param history history to activate
-   */
-  public void setHistory(List<State> history) {
-    this.history = history;
   }
 
   /**

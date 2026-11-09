@@ -46,7 +46,7 @@ public abstract class Logic implements Serializable {
   private static <T extends HealthRecord.Entry> HealthRecord.Entry findEntryFromHistory(
       Person person, Class<T> classType, Code code) {
     HealthRecord.Entry entry = null;
-    for (State state : person.getHistory()) {
+    for (State state : person.history) {
       if (classType.isInstance(state.entry)) {
         T candidate = (T) state.entry;
         for (Code candidateCode : candidate.codes) {

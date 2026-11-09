@@ -284,7 +284,7 @@ public class FHIRR4ExporterTest {
     person.attributes.put(Person.CONTACT_EMAIL, "test@test.test");
     person.attributes.put(Person.CONTACT_GIVEN_NAME, "John");
     person.attributes.put(Person.CONTACT_FAMILY_NAME, "Appleseed");
-    person.setHistory(new LinkedList<>());
+    person.history = new LinkedList<>();
 
     Provider stub = new Provider();
     stub.name = "Fake Provider";
@@ -312,15 +312,15 @@ public class FHIRR4ExporterTest {
 
     State encounter = module.getState("SomeEncounter");
     assertTrue(encounter.process(person, time));
-    person.getHistory().add(encounter);
+    person.history.add(encounter);
 
     State physiology = module.getState("Simulate_CVS");
     assertTrue(physiology.process(person, time));
-    person.getHistory().add(physiology);
+    person.history.add(physiology);
 
     State sampleObs = module.getState("SampledDataObservation");
     assertTrue(sampleObs.process(person, time));
-    person.getHistory().add(sampleObs);
+    person.history.add(sampleObs);
 
     FhirContext ctx = FhirR4.getContext();
     IParser parser = ctx.newJsonParser().setPrettyPrint(true);
@@ -352,7 +352,7 @@ public class FHIRR4ExporterTest {
     person.attributes.put("Pulmonary Resistance", 0.1552);
     person.attributes.put("BMI Multiplier", 0.055);
     person.setVitalSign(VitalSign.BMI, 21.0);
-    person.setHistory(new LinkedList<>());
+    person.history = new LinkedList<>();
 
     Provider stub = new Provider();
     stub.name = "Fake Provider";
@@ -378,19 +378,19 @@ public class FHIRR4ExporterTest {
 
     State physiology = module.getState("Simulate_CVS");
     assertTrue(physiology.process(person, time));
-    person.getHistory().add(physiology);
+    person.history.add(physiology);
 
     State encounter = module.getState("SomeEncounter");
     assertTrue(encounter.process(person, time));
-    person.getHistory().add(encounter);
+    person.history.add(encounter);
 
     State chartState = module.getState("ChartObservation");
     assertTrue(chartState.process(person, time));
-    person.getHistory().add(chartState);
+    person.history.add(chartState);
 
     State urlState = module.getState("UrlObservation");
     assertTrue(urlState.process(person, time));
-    person.getHistory().add(urlState);
+    person.history.add(urlState);
 
     FhirContext ctx = FhirR4.getContext();
     IParser parser = ctx.newJsonParser().setPrettyPrint(true);
