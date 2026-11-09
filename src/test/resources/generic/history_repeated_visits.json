@@ -1,0 +1,12 @@
+{
+  "name": "History repeated visits",
+  "states": {
+    "Initial": {"type": "Initial", "direct_transition": "Wait"},
+    "Wait": {
+      "type": "Guard",
+      "allow": {"condition_type": "Attribute", "attribute": "advance", "operator": "==", "value": true},
+      "direct_transition": "Reset"
+    },
+    "Reset": {"type": "SetAttribute", "attribute": "advance", "value": false, "direct_transition": "Wait"}
+  }
+}

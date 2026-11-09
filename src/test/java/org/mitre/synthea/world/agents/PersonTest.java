@@ -126,6 +126,16 @@ public class PersonTest {
   }
 
   @Test
+  public void aliveRequiresBirthEvenWhenDeathIsInTheFuture() {
+    Person person = new Person(1);
+    person.attributes.put(Person.DEATHDATE, 20L);
+    org.junit.Assert.assertFalse(person.alive(10));
+    person.attributes.put(Person.BIRTHDATE, 0L);
+    assertTrue(person.alive(10));
+    org.junit.Assert.assertFalse(person.alive(20));
+  }
+
+  @Test
   public void testAge() {
     long birthdate;
     long now;

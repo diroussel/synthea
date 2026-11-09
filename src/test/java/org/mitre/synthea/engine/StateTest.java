@@ -946,6 +946,22 @@ public class StateTest {
   }
 
   @Test
+  public void wellnessEncounterCanOnlyBeUsedOnceBeforeItsTrackingIsReset() throws Exception {
+    Module module = TestHelper.getFixture("encounter.json");
+    State encounter = module.getState("Annual_Physical");
+    simulateWellnessEncounter(module, person, time);
+    assertTrue(encounter.process(person, time));
+    String key = EncounterModule.ACTIVE_WELLNESS_ENCOUNTER + " " + module.name;
+    assertEquals(Boolean.TRUE, person.attributes.get(key));
+    assertFalse(encounter.process(person, time));
+    person.attributes.remove(key);
+    assertFalse(encounter.process(person, time));
+    assertFalse(encounter.process(person, time));
+    person.attributes.put(key, false);
+    assertTrue(encounter.process(person, time));
+  }
+
+  @Test
   public void wellness_encounter_diagnoses_condition() throws Exception {
     Module module = TestHelper.getFixture("encounter.json");
     // First, onset the Diabetes!
