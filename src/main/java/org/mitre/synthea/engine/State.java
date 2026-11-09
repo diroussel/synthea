@@ -303,7 +303,7 @@ public abstract class State implements Cloneable, Serializable {
     @Override
     public boolean process(Person person, long time) {
       // e.g. "submodule": "medications/otc_antihistamine"
-      List<State> moduleHistory = person.history;
+      List<State> parentHistory = person.getHistory();
       Module submod = Module.getModuleByPath(submodule);
       if (submod == null) {
         throw new RuntimeException("Unknown submodule: " + submodule);
@@ -313,35 +313,36 @@ public abstract class State implements Cloneable, Serializable {
       // to act on encounters created using the same name.
       submod.name = module.name;
       boolean completed = submod.process(person, time);
+      List<State> submoduleHistory = person.getHistory();
 
       if (completed) {
         // keep track of when the submodule exited,
         // in case it was "rewinding time" when it completed
-        if (person.history.get(0).exited == null) {
+        if (submoduleHistory.get(0).exited == null) {
           // this happens when the patient dies in the submodule,
           // so processing is going to stop anyway
           // but just to be safe and not crash,
           // we'll assume we exited at the current timestep
           this.submoduleExited = time;
         } else {
-          this.submoduleExited = person.history.get(0).exited;
+          this.submoduleExited = submoduleHistory.get(0).exited;
         }
 
         // add the history from the submodule to this module's history, at the front
-        if (moduleHistory != person.history) {
+        if (parentHistory != submoduleHistory) {
           // if the submodule is a java module, it didn't create its own history
-          moduleHistory.addAll(0, person.history);
+          parentHistory.addAll(0, submoduleHistory);
         }
         // clear the submodule history
-        person.attributes.remove(submod.submoduleName);
-        // reset person.history to this module's history
-        person.history = moduleHistory;
+        person.removeHistory(submod.submoduleName);
+        // Restore the parent history after the submodule call.
+        person.setHistory(parentHistory);
         // add this state to history to indicate we returned to this module
-        person.history.add(0, this);
+        parentHistory.add(0, this);
         return true;
       } else {
-        // reset person.history to this module's history
-        person.history = moduleHistory;
+        // Restore the parent history after the submodule call.
+        person.setHistory(parentHistory);
         // the submodule is still processing
         // next time we call this state it should pick up where it left off
         return false;
@@ -952,13 +953,9 @@ public abstract class State implements Cloneable, Serializable {
             && person.getCurrentEncounterModule().equals(EncounterModule.NAME)) {
           HealthRecord.Encounter encounter = person.record.currentEncounter(time);
           entry = encounter;
-          String activeKey = EncounterModule.ACTIVE_WELLNESS_ENCOUNTER + " " + module.name;
-          if (person.attributes.containsKey(activeKey)) {
-            // check-in with the activeKey...
-            boolean status = (Boolean) person.attributes.get(activeKey);
-            if (status == false) {
-              // mark that we have used our active key
-              person.attributes.put(activeKey, true);
+          Boolean status = person.checkInWellnessEncounter(module.name);
+          if (status != null) {
+            if (!status) {
               diagnosePastConditions(person, time);
               if (!encounter.chronicMedsRenewed && person.chronicMedications.size() > 0) {
                 renewChronicMedicationsAtWellness(person, time);
@@ -1063,7 +1060,7 @@ public abstract class State implements Cloneable, Serializable {
 
     private void diagnosePastConditions(Person person, long time) {
       // reminder: history[0] is current state, history[size-1] is Initial
-      for (State state : person.history) {
+      for (State state : person.getHistory()) {
         if (state instanceof OnsetState) {
           OnsetState onset = (OnsetState) state;
 

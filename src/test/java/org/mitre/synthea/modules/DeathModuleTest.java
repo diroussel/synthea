@@ -37,7 +37,7 @@ public class DeathModuleTest {
     person.attributes.put(Person.INCOME, 100000);
     time = System.currentTimeMillis();
 
-    person.history = new LinkedList<>();
+    person.setHistory(new LinkedList<>());
     Provider mock = Mockito.mock(Provider.class);
     Mockito.when(mock.getResourceID()).thenReturn("Mock-UUID");
     person.setProvider(EncounterType.AMBULATORY, mock);

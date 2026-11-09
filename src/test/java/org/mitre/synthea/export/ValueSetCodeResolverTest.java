@@ -202,10 +202,10 @@ public class ValueSetCodeResolverTest {
     // a way to
     // instantiate it programmatically.
     Module module = TestHelper.getFixture("imaging_study_with_valueset.json");
-    person.history = new ArrayList<>();
+    person.setHistory(new ArrayList<>());
     State encounterState = module.getState("ED_Visit");
     assertTrue(encounterState.process(person, time));
-    person.history.add(encounterState);
+    person.getHistory().add(encounterState);
     State mri = module.getState("Knee_MRI");
     assertTrue(mri.process(person, time));
 
@@ -268,10 +268,10 @@ public class ValueSetCodeResolverTest {
     // a way to
     // instantiate it programmatically.
     Module module = TestHelper.getFixture("imaging_study_with_valueset.json");
-    person.history = new ArrayList<>();
+    person.setHistory(new ArrayList<>());
     State encounterState = module.getState("ED_Visit");
     assertTrue(encounterState.process(person, time));
-    person.history.add(encounterState);
+    person.getHistory().add(encounterState);
     State mri = module.getState("Knee_MRI");
     assertTrue(mri.process(person, time));
 

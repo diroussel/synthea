@@ -74,7 +74,7 @@ public class StateTest {
         .get("generate.demographics.socioeconomic.income.poverty")) * 2);
     person.attributes.put(Person.OCCUPATION_LEVEL, 1.0);
 
-    person.history = new LinkedList<>();
+    person.setHistory(new LinkedList<>());
     Provider mock = Mockito.mock(Provider.class, withSettings().serializable());
     Mockito.when(mock.getResourceID()).thenReturn("Mock-UUID");
     person.setProvider(EncounterType.AMBULATORY, mock);
@@ -210,12 +210,12 @@ public class StateTest {
 
     State condition = module.getState("Diabetes");
     // Should pass through this state immediately without calling the record
-    person.history.add(0, condition);
+    person.getHistory().add(0, condition);
     assertTrue(condition.process(person, time));
 
     // The encounter comes next (and add it to history);
     State encounter = module.getState("ED_Visit");
-    person.history.add(0, encounter); // states are added to history before being processed
+    person.getHistory().add(0, encounter); // states are added to history before being processed
     assertTrue(encounter.process(person, time));
 
     assertEquals(1, person.record.encounters.size());
@@ -241,7 +241,7 @@ public class StateTest {
     State encounter = module.getState("ED_Visit");
 
     assertTrue(encounter.process(person, time));
-    person.history.add(0, encounter);
+    person.getHistory().add(0, encounter);
 
     // Then appendicitis is diagnosed
     State appendicitis = module.getState("Appendicitis");
@@ -277,7 +277,7 @@ public class StateTest {
     State encounter = module.getState("ED_Visit");
 
     assertTrue(encounter.process(person, time));
-    person.history.add(0, encounter);
+    person.getHistory().add(0, encounter);
 
     // Then appendicitis is diagnosed
     State appendicitis = module.getState("Appendicitis");
@@ -730,7 +730,7 @@ public class StateTest {
     Module module = TestHelper.getFixture("procedure.json");
     State encounter = module.getState("Inpatient_Encounter");
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     State appendectomy = module.getState("Appendectomy");
     appendectomy.process(person, time);
@@ -754,7 +754,7 @@ public class StateTest {
     State encounter = module.getState("Inpatient_Encounter");
 
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Then have the appendectomy
     State appendectomy = module.getState("Appendectomy");
@@ -795,15 +795,15 @@ public class StateTest {
 
     State vitalsign = module.getState("VitalSign");
     assertTrue(vitalsign.process(person, time));
-    person.history.add(vitalsign);
+    person.getHistory().add(vitalsign);
 
     State encounter = module.getState("SomeEncounter");
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     State physiology = module.getState("Simulate_CVS");
     assertTrue(physiology.process(person, time));
-    person.history.add(physiology);
+    person.getHistory().add(physiology);
 
     State vitalObs = module.getState("VitalSignObservation");
     assertTrue(vitalObs.process(person, time));
@@ -878,12 +878,12 @@ public class StateTest {
     // First, onset the injury
     State kneeInjury = module.getState("Knee_Injury");
     assertTrue(kneeInjury.process(person, time));
-    person.history.add(kneeInjury);
+    person.getHistory().add(kneeInjury);
 
     // An ImagingStudy must occur during an Encounter
     State encounterState = module.getState("ED_Visit");
     assertTrue(encounterState.process(person, time));
-    person.history.add(encounterState);
+    person.getHistory().add(encounterState);
 
     // Run the imaging study
     State mri = module.getState("Knee_MRI");
@@ -967,7 +967,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State diabetes = module.getState("Diabetes");
     assertTrue(diabetes.process(person, time));
-    person.history.add(diabetes);
+    person.getHistory().add(diabetes);
 
     // Now process the encounter, waiting until it actually happens
     State encounter = module.getState("Annual_Physical_2");
@@ -995,7 +995,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State diabetes = module.getState("Diabetes");
     assertTrue(diabetes.process(person, time));
-    person.history.add(diabetes);
+    person.getHistory().add(diabetes);
 
     State encounter = module.getState("ED_Visit");
     assertTrue(encounter.process(person, time));
@@ -1016,7 +1016,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State diabetes = module.getState("Diabetes");
     assertTrue(diabetes.process(person, time));
-    person.history.add(diabetes);
+    person.getHistory().add(diabetes);
 
     // Non-wellness encounters happen immediately
     State encounter = module.getState("ED_Visit_AttributeReason");
@@ -1039,7 +1039,7 @@ public class StateTest {
     State allergyState = module.getState("Allergy_to_Eggs");
     // Should pass through this state immediately without calling the record
     assertTrue(allergyState.process(person, time));
-    person.history.add(allergyState);
+    person.getHistory().add(allergyState);
 
     State encounter = module.getState("Dr_Visit");
     assertTrue(encounter.process(person, time));
@@ -1072,7 +1072,7 @@ public class StateTest {
     State allergyState = module.getState("Allergy_to_Eggs").clone();
     // Should pass through this state immediately without calling the record
     assertTrue(allergyState.process(person, time));
-    person.history.add(allergyState);
+    person.getHistory().add(allergyState);
 
     State encounter = module.getState("Dr_Visit").clone();
     assertTrue(encounter.process(person, time));
@@ -1097,7 +1097,7 @@ public class StateTest {
     // First, onset the condition
     State condition2 = module.getState("Condition2_Start");
     assertTrue(condition2.process(person, time));
-    person.history.add(condition2);
+    person.getHistory().add(condition2);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("DiagnosisEncounter");
@@ -1107,7 +1107,7 @@ public class StateTest {
 
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Now process the end of the condition
     State conEnd = module.getState("Condition2_End");
@@ -1127,7 +1127,7 @@ public class StateTest {
     // First, onset the condition
     State condition1 = module.getState("Condition1_Start");
     assertTrue(condition1.process(person, time));
-    person.history.add(condition1);
+    person.getHistory().add(condition1);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("DiagnosisEncounter");
@@ -1135,7 +1135,7 @@ public class StateTest {
     time = time + Utilities.convertTime("months", 6);
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     HealthRecord.Entry attributeEntry = (HealthRecord.Entry) person.attributes
         .get("Drug Use Behavior");
@@ -1167,7 +1167,7 @@ public class StateTest {
     // First, onset the condition
     State condition2 = module.getState("Condition2_Start");
     assertTrue(condition2.process(person, time));
-    person.history.add(condition2);
+    person.getHistory().add(condition2);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("DiagnosisEncounter");
@@ -1177,7 +1177,7 @@ public class StateTest {
 
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Now process the end of the condition
     State conEnd = module.getState("Condition2_End");
@@ -1205,7 +1205,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State condition3 = module.getState("Condition3_Start");
     assertTrue(condition3.process(person, time));
-    person.history.add(condition3);
+    person.getHistory().add(condition3);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("DiagnosisEncounter");
@@ -1214,7 +1214,7 @@ public class StateTest {
     // Simulate the wellness encounter by calling perform_encounter
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Now process the end of the condition
     State conEnd = module.getState("Condition3_End");
@@ -1242,7 +1242,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State diabetes = module.getState("Diabetes");
     assertTrue(diabetes.process(person, time));
-    person.history.add(diabetes);
+    person.getHistory().add(diabetes);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("Wellness_Encounter");
@@ -1250,7 +1250,7 @@ public class StateTest {
     time = time + Utilities.convertTime("months", 6);
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Prevent Null Pointer by giving the person their QOLS
     Map<Integer, Double> qolsByYear = new HashMap<Integer, Double>();
@@ -1278,7 +1278,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State diabetes = module.getState("Diabetes");
     assertTrue(diabetes.process(person, time));
-    person.history.add(diabetes);
+    person.getHistory().add(diabetes);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("Wellness_Encounter");
@@ -1286,7 +1286,7 @@ public class StateTest {
     time = time + Utilities.convertTime("months", 6);
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Prevent Null Pointer by giving the person their QOLS
     Map<Integer, Double> qolsByYear = new HashMap<Integer, Double>();
@@ -1315,7 +1315,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State diabetes = module.getState("Diabetes");
     assertTrue(diabetes.process(person, time));
-    person.history.add(diabetes);
+    person.getHistory().add(diabetes);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("Wellness_Encounter");
@@ -1324,7 +1324,7 @@ public class StateTest {
 
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Prevent Null Pointer by giving the person their QOLS
     Map<Integer, Double> qolsByYear = new HashMap<Integer, Double>();
@@ -1353,7 +1353,7 @@ public class StateTest {
     State encounter = module.getState("Wellness_Encounter");
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     State med = module.getState("Metformin_With_Administration");
     assertTrue(med.process(person, time));
@@ -1371,7 +1371,7 @@ public class StateTest {
     State encounter = module.getState("Wellness_Encounter");
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     State med = module.getState("Metformin");
     assertTrue(med.process(person, time));
@@ -1394,7 +1394,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State diabetes = module.getState("Diabetes");
     assertTrue(diabetes.process(person, time));
-    person.history.add(diabetes);
+    person.getHistory().add(diabetes);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("Wellness_Encounter");
@@ -1403,7 +1403,7 @@ public class StateTest {
 
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Prevent Null Pointer by giving the person their QOLS
     Map<Integer, Double> qolsByYear = new HashMap<Integer, Double>();
@@ -1414,7 +1414,7 @@ public class StateTest {
     State med = module.getState("Insulin_Start");
     assertTrue(med.process(person, time));
 
-    person.history.add(med);
+    person.getHistory().add(med);
 
     // Now process the end of the prescription
     State medEnd = module.getState("Insulin_End");
@@ -1436,7 +1436,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State diabetes = module.getState("Diabetes");
     assertTrue(diabetes.process(person, time));
-    person.history.add(diabetes);
+    person.getHistory().add(diabetes);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("Wellness_Encounter");
@@ -1444,7 +1444,7 @@ public class StateTest {
     time = time + Utilities.convertTime("months", 6);
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Prevent Null Pointer by giving the person their QOLS
     Map<Integer, Double> qolsByYear = new HashMap<Integer, Double>();
@@ -1455,7 +1455,7 @@ public class StateTest {
     State med = module.getState("Bromocriptine_Start");
     assertTrue(med.process(person, time));
 
-    person.history.add(med);
+    person.getHistory().add(med);
 
     // Now process the end of the prescription
     State medEnd = module.getState("Bromocriptine_End");
@@ -1477,7 +1477,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State diabetes = module.getState("Diabetes");
     assertTrue(diabetes.process(person, time));
-    person.history.add(diabetes);
+    person.getHistory().add(diabetes);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("Wellness_Encounter");
@@ -1485,7 +1485,7 @@ public class StateTest {
     time = time + Utilities.convertTime("months", 6);
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Prevent Null Pointer by giving the person their QOLS
     Map<Integer, Double> qolsByYear = new HashMap<Integer, Double>();
@@ -1496,7 +1496,7 @@ public class StateTest {
     State med = module.getState("Metformin_Start");
     assertTrue(med.process(person, time));
 
-    person.history.add(med);
+    person.getHistory().add(med);
 
     // Now process the end of the prescription
     State medEnd = module.getState("Metformin_End");
@@ -1518,7 +1518,7 @@ public class StateTest {
     // First onset diabetes
     State diabetes = module.getState("Diabetes");
     assertTrue(diabetes.process(person, time));
-    person.history.add(diabetes);
+    person.getHistory().add(diabetes);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("Wellness_Encounter");
@@ -1526,12 +1526,12 @@ public class StateTest {
     time = time + Utilities.convertTime("months", 6);
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Now process the careplan
     State plan = module.getState("Diabetes_Self_Management");
     assertTrue(plan.process(person, time));
-    person.history.add(plan);
+    person.getHistory().add(plan);
 
     // Verify that the careplan was added to the record
     HealthRecord.CarePlan cp = person.record.encounters.get(0).careplans.get(0);
@@ -1555,7 +1555,7 @@ public class StateTest {
     State encounter = module.getState("Wellness_Encounter");
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     State plan = module.getState("Diabetes_Self_Management");
     assertTrue(plan.process(person, time));
@@ -1576,7 +1576,7 @@ public class StateTest {
     // First, onset the condition
     State condition = module.getState("The_Condition");
     assertTrue(condition.process(person, time));
-    person.history.add(condition);
+    person.getHistory().add(condition);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("Wellness_Encounter");
@@ -1584,14 +1584,14 @@ public class StateTest {
     time = time + Utilities.convertTime("months", 6);
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Now process the careplan
     State plan = module.getState("CarePlan1_Start");
     // have to use `run` not `process` here because the entity
     // attribute stuff happens in `run`
     assertTrue(plan.process(person, time));
-    person.history.add(plan);
+    person.getHistory().add(plan);
 
     HealthRecord.CarePlan entityAttribute = (HealthRecord.CarePlan) person.attributes
         .get("Diabetes_CarePlan");
@@ -1599,7 +1599,7 @@ public class StateTest {
     // Now process the end of the careplan
     State planEnd = module.getState("CarePlan1_End");
     assertTrue(planEnd.process(person, time));
-    person.history.add(planEnd);
+    person.getHistory().add(planEnd);
 
     HealthRecord.CarePlan cp = person.record.encounters.get(0).careplans.get(0);
     assertEquals(time, cp.start);
@@ -1623,24 +1623,24 @@ public class StateTest {
     // First, onset the condition
     State condition = module.getState("The_Condition");
     assertTrue(condition.process(person, time));
-    person.history.add(condition);
+    person.getHistory().add(condition);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("Wellness_Encounter");
     assertFalse(encounter.process(person, time));
     time = time + Utilities.convertTime("months", 6);
     simulateWellnessEncounter(module, person, time);
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Now process the careplan
     State plan = module.getState("CarePlan2_Start");
     assertTrue(plan.process(person, time));
-    person.history.add(plan);
+    person.getHistory().add(plan);
 
     // Now process the end of the careplan
     State planEnd = module.getState("CarePlan2_End");
     assertTrue(planEnd.process(person, time));
-    person.history.add(planEnd);
+    person.getHistory().add(planEnd);
 
     HealthRecord.CarePlan cp = person.record.encounters.get(0).careplans.get(0);
     assertEquals(time, cp.start);
@@ -1669,7 +1669,7 @@ public class StateTest {
     // First, onset the condition
     State condition = module.getState("The_Condition");
     assertTrue(condition.process(person, time));
-    person.history.add(condition);
+    person.getHistory().add(condition);
 
     // Process the wellness encounter state, which will wait for a wellness encounter
     State encounter = module.getState("Wellness_Encounter");
@@ -1677,17 +1677,17 @@ public class StateTest {
     time = time + Utilities.convertTime("months", 6);
     simulateWellnessEncounter(module, person, time);
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     // Now process the careplan
     State plan = module.getState("CarePlan3_Start");
     assertTrue(plan.process(person, time));
-    person.history.add(plan);
+    person.getHistory().add(plan);
 
     // Now process the end of the careplan
     State planEnd = module.getState("CarePlan3_End");
     assertTrue(planEnd.process(person, time));
-    person.history.add(planEnd);
+    person.getHistory().add(planEnd);
 
     HealthRecord.CarePlan cp = person.record.encounters.get(0).careplans.get(0);
     assertEquals(time, cp.start);
@@ -1810,7 +1810,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State condition = module.getState("OnsetDiabetes");
     assertTrue(condition.process(person, time));
-    person.history.add(condition);
+    person.getHistory().add(condition);
 
     // Now process the end of the condition
     State death = module.getState("Death_by_Code");
@@ -1826,7 +1826,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State condition = module.getState("OnsetDiabetes");
     assertTrue(condition.process(person, time));
-    person.history.add(condition);
+    person.getHistory().add(condition);
 
     // Now process the end of the condition
     State death = module.getState("Death_by_ConditionOnset");
@@ -1842,7 +1842,7 @@ public class StateTest {
     // First, onset the Diabetes!
     State condition = module.getState("OnsetDiabetes");
     assertTrue(condition.process(person, time));
-    person.history.add(condition);
+    person.getHistory().add(condition);
 
     // Now process the end of the condition
     State death = module.getState("Death_by_Attribute");
@@ -1862,7 +1862,7 @@ public class StateTest {
 
     // Run number one should stop at the delay
     module.process(person, time);
-    assertEquals("2_Day_Delay", person.history.get(0).name);
+    assertEquals("2_Day_Delay", person.getHistory().get(0).name);
 
     // Run number two should go all the way to Terminal, but should process Encounter and Death
     // along the way
@@ -1870,30 +1870,30 @@ public class StateTest {
     module.process(person, time + days(7));
 
 
-    assertEquals(6, person.history.size());
-    assertEquals("Initial", person.history.get(5).name);
-    assertEquals(time, (long)person.history.get(5).entered);
-    assertEquals(time, (long) person.history.get(5).exited);
+    assertEquals(6, person.getHistory().size());
+    assertEquals("Initial", person.getHistory().get(5).name);
+    assertEquals(time, (long)person.getHistory().get(5).entered);
+    assertEquals(time, (long) person.getHistory().get(5).exited);
 
-    assertEquals("2_Day_Delay", person.history.get(4).name);
-    assertEquals(time, (long) person.history.get(4).entered);
-    assertEquals(time + days(2), (long) person.history.get(4).exited);
+    assertEquals("2_Day_Delay", person.getHistory().get(4).name);
+    assertEquals(time, (long) person.getHistory().get(4).entered);
+    assertEquals(time + days(2), (long) person.getHistory().get(4).exited);
 
-    assertEquals("ED_Visit", person.history.get(3).name);
-    assertEquals(time + days(2), (long) person.history.get(3).entered);
-    assertEquals(time + days(2), (long) person.history.get(3).exited);
+    assertEquals("ED_Visit", person.getHistory().get(3).name);
+    assertEquals(time + days(2), (long) person.getHistory().get(3).entered);
+    assertEquals(time + days(2), (long) person.getHistory().get(3).exited);
 
-    assertEquals("3_Day_Delay", person.history.get(2).name);
-    assertEquals(time + days(2), (long) person.history.get(2).entered);
-    assertEquals(time + days(5), (long) person.history.get(2).exited);
+    assertEquals("3_Day_Delay", person.getHistory().get(2).name);
+    assertEquals(time + days(2), (long) person.getHistory().get(2).entered);
+    assertEquals(time + days(5), (long) person.getHistory().get(2).exited);
 
-    assertEquals("Death", person.history.get(1).name);
-    assertEquals(time + days(5), (long) person.history.get(1).entered);
-    assertEquals(time + days(5), (long) person.history.get(1).exited);
+    assertEquals("Death", person.getHistory().get(1).name);
+    assertEquals(time + days(5), (long) person.getHistory().get(1).entered);
+    assertEquals(time + days(5), (long) person.getHistory().get(1).exited);
 
-    assertEquals("Terminal", person.history.get(0).name);
-    assertEquals(null, person.history.get(0).entered);
-    assertEquals(null, person.history.get(0).exited);
+    assertEquals("Terminal", person.getHistory().get(0).name);
+    assertEquals(null, person.getHistory().get(0).entered);
+    assertEquals(null, person.getHistory().get(0).exited);
   }
 
   /**
@@ -1927,127 +1927,127 @@ public class StateTest {
       // encounter_submodule has 6 states, with the callsubmodule counted 2x
       // medication_submodule has 5 states
       // total = 18
-      System.out.println(person.history);
-      assertEquals(18, person.history.size());
+      System.out.println(person.getHistory());
+      assertEquals(18, person.getHistory().size());
 
-      assertEquals("Initial", person.history.get(17).name);
-      assertEquals("Recursive Calls Submodules Module", person.history.get(17).module.name);
+      assertEquals("Initial", person.getHistory().get(17).name);
+      assertEquals("Recursive Calls Submodules Module", person.getHistory().get(17).module.name);
 
-      assertEquals("Example_Condition", person.history.get(16).name);
-      assertEquals("Recursive Calls Submodules Module", person.history.get(16).module.name);
-      long previousStateExited = person.history.get(17).exited;
-      long currentStateEntered = person.history.get(16).entered;
+      assertEquals("Example_Condition", person.getHistory().get(16).name);
+      assertEquals("Recursive Calls Submodules Module", person.getHistory().get(16).module.name);
+      long previousStateExited = person.getHistory().get(17).exited;
+      long currentStateEntered = person.getHistory().get(16).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
-      assertEquals("Call_Encounter_Submodule", person.history.get(15).name);
-      assertEquals("Recursive Calls Submodules Module", person.history.get(15).module.name);
-      previousStateExited = person.history.get(16).exited;
-      currentStateEntered = person.history.get(15).entered;
+      assertEquals("Call_Encounter_Submodule", person.getHistory().get(15).name);
+      assertEquals("Recursive Calls Submodules Module", person.getHistory().get(15).module.name);
+      previousStateExited = person.getHistory().get(16).exited;
+      currentStateEntered = person.getHistory().get(15).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
-      assertEquals("Initial", person.history.get(14).name);
-      assertEquals("Encounter Submodule Module", person.history.get(14).module.submoduleName);
+      assertEquals("Initial", person.getHistory().get(14).name);
+      assertEquals("Encounter Submodule Module", person.getHistory().get(14).module.submoduleName);
       // the state being called by the submodule won't necessarily have this property
       // because submodule.exited gets rewritten to whenever the terminal of the submodule exits
       // ex. main.CallSubmodule: entered 1/1/2020, exited 12/31/2020
       //     sub.Initial: entered 1/1/2020 exited 1/1/2020
       //     sub.Delay: entered 1/1/2020 exited 12/31/2020
       //     sub.Terminal: entered 12/31/2020 exited 12/31/2020
-      // previousStateExited = person.history.get(15).exited;
-      // currentStateEntered = person.history.get(14).entered;
+      // previousStateExited = person.getHistory().get(15).exited;
+      // currentStateEntered = person.getHistory().get(14).entered;
       // assertEquals(previousStateExited, currentStateEntered);
 
-      assertEquals("Delay", person.history.get(13).name);
-      assertEquals("Encounter Submodule Module", person.history.get(13).module.submoduleName);
-      previousStateExited = person.history.get(14).exited;
-      currentStateEntered = person.history.get(13).entered;
+      assertEquals("Delay", person.getHistory().get(13).name);
+      assertEquals("Encounter Submodule Module", person.getHistory().get(13).module.submoduleName);
+      previousStateExited = person.getHistory().get(14).exited;
+      currentStateEntered = person.getHistory().get(13).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
-      assertEquals("Encounter_In_Submodule", person.history.get(12).name);
-      assertEquals("Encounter Submodule Module", person.history.get(12).module.submoduleName);
-      previousStateExited = person.history.get(13).exited;
-      currentStateEntered = person.history.get(12).entered;
+      assertEquals("Encounter_In_Submodule", person.getHistory().get(12).name);
+      assertEquals("Encounter Submodule Module", person.getHistory().get(12).module.submoduleName);
+      previousStateExited = person.getHistory().get(13).exited;
+      currentStateEntered = person.getHistory().get(12).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
-      assertEquals("Call_MedicationOrder_Submodule", person.history.get(11).name);
-      assertEquals("Encounter Submodule Module", person.history.get(11).module.submoduleName);
-      previousStateExited = person.history.get(12).exited;
-      currentStateEntered = person.history.get(11).entered;
+      assertEquals("Call_MedicationOrder_Submodule", person.getHistory().get(11).name);
+      assertEquals("Encounter Submodule Module", person.getHistory().get(11).module.submoduleName);
+      previousStateExited = person.getHistory().get(12).exited;
+      currentStateEntered = person.getHistory().get(11).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
 
-      assertEquals("Initial", person.history.get(10).name);
-      assertEquals("Medication Submodule Module", person.history.get(10).module.submoduleName);
-      // previousStateExited = person.history.get(11).exited;
-      // currentStateEntered = person.history.get(10).entered;
+      assertEquals("Initial", person.getHistory().get(10).name);
+      assertEquals("Medication Submodule Module", person.getHistory().get(10).module.submoduleName);
+      // previousStateExited = person.getHistory().get(11).exited;
+      // currentStateEntered = person.getHistory().get(10).entered;
       // assertEquals(previousStateExited, currentStateEntered);
       // see notes above for why this property doesn't hold
 
-      assertEquals("Examplitis_Medication", person.history.get(9).name);
-      assertEquals("Medication Submodule Module", person.history.get(9).module.submoduleName);
-      previousStateExited = person.history.get(10).exited;
-      currentStateEntered = person.history.get(9).entered;
+      assertEquals("Examplitis_Medication", person.getHistory().get(9).name);
+      assertEquals("Medication Submodule Module", person.getHistory().get(9).module.submoduleName);
+      previousStateExited = person.getHistory().get(10).exited;
+      currentStateEntered = person.getHistory().get(9).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
-      assertEquals("Delay_Yet_Again", person.history.get(8).name);
-      assertEquals("Medication Submodule Module", person.history.get(8).module.submoduleName);
-      previousStateExited = person.history.get(9).exited;
-      currentStateEntered = person.history.get(8).entered;
+      assertEquals("Delay_Yet_Again", person.getHistory().get(8).name);
+      assertEquals("Medication Submodule Module", person.getHistory().get(8).module.submoduleName);
+      previousStateExited = person.getHistory().get(9).exited;
+      currentStateEntered = person.getHistory().get(8).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
-      assertEquals("End_Medication", person.history.get(7).name);
-      assertEquals("Medication Submodule Module", person.history.get(7).module.submoduleName);
-      previousStateExited = person.history.get(8).exited;
-      currentStateEntered = person.history.get(7).entered;
+      assertEquals("End_Medication", person.getHistory().get(7).name);
+      assertEquals("Medication Submodule Module", person.getHistory().get(7).module.submoduleName);
+      previousStateExited = person.getHistory().get(8).exited;
+      currentStateEntered = person.getHistory().get(7).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
-      assertEquals("Med_Terminal", person.history.get(6).name);
-      assertEquals("Medication Submodule Module", person.history.get(6).module.submoduleName);
-      previousStateExited = person.history.get(7).exited;
-      currentStateEntered = person.history.get(6).entered;
+      assertEquals("Med_Terminal", person.getHistory().get(6).name);
+      assertEquals("Medication Submodule Module", person.getHistory().get(6).module.submoduleName);
+      previousStateExited = person.getHistory().get(7).exited;
+      currentStateEntered = person.getHistory().get(6).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
 
-      assertEquals("Call_MedicationOrder_Submodule", person.history.get(5).name);
-      assertEquals("Encounter Submodule Module", person.history.get(5).module.submoduleName);
-      // previousStateExited = person.history.get(6).exited;
-      // currentStateEntered = person.history.get(5).entered;
+      assertEquals("Call_MedicationOrder_Submodule", person.getHistory().get(5).name);
+      assertEquals("Encounter Submodule Module", person.getHistory().get(5).module.submoduleName);
+      // previousStateExited = person.getHistory().get(6).exited;
+      // currentStateEntered = person.getHistory().get(5).entered;
       // assertEquals(previousStateExited, currentStateEntered);
       // note that this is the same state object at position 11 and 5
       // even though it was only called once it shows up twice
       // (before and after all of the submodule states)
       // but the entered & exited times don't line up cleanly
 
-      assertEquals("Delay_Some_More", person.history.get(4).name);
-      assertEquals("Encounter Submodule Module", person.history.get(4).module.submoduleName);
-      previousStateExited = person.history.get(5).exited;
-      currentStateEntered = person.history.get(4).entered;
+      assertEquals("Delay_Some_More", person.getHistory().get(4).name);
+      assertEquals("Encounter Submodule Module", person.getHistory().get(4).module.submoduleName);
+      previousStateExited = person.getHistory().get(5).exited;
+      currentStateEntered = person.getHistory().get(4).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
-      assertEquals("Encounter_Terminal", person.history.get(3).name);
-      assertEquals("Encounter Submodule Module", person.history.get(3).module.submoduleName);
-      previousStateExited = person.history.get(4).exited;
-      currentStateEntered = person.history.get(3).entered;
+      assertEquals("Encounter_Terminal", person.getHistory().get(3).name);
+      assertEquals("Encounter Submodule Module", person.getHistory().get(3).module.submoduleName);
+      previousStateExited = person.getHistory().get(4).exited;
+      currentStateEntered = person.getHistory().get(3).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
 
-      assertEquals("Call_Encounter_Submodule", person.history.get(2).name);
-      assertEquals("Recursive Calls Submodules Module", person.history.get(2).module.name);
-      // previousStateExited = person.history.get(3).exited;
-      // currentStateEntered = person.history.get(2).entered;
+      assertEquals("Call_Encounter_Submodule", person.getHistory().get(2).name);
+      assertEquals("Recursive Calls Submodules Module", person.getHistory().get(2).module.name);
+      // previousStateExited = person.getHistory().get(3).exited;
+      // currentStateEntered = person.getHistory().get(2).entered;
       // assertEquals(previousStateExited, currentStateEntered);
       // see note above, this is the same as position 15
 
-      assertEquals("End_Condition", person.history.get(1).name);
-      assertEquals("Recursive Calls Submodules Module", person.history.get(1).module.name);
-      previousStateExited = person.history.get(2).exited;
-      currentStateEntered = person.history.get(1).entered;
+      assertEquals("End_Condition", person.getHistory().get(1).name);
+      assertEquals("Recursive Calls Submodules Module", person.getHistory().get(1).module.name);
+      previousStateExited = person.getHistory().get(2).exited;
+      currentStateEntered = person.getHistory().get(1).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
-      assertEquals("Terminal", person.history.get(0).name);
-      assertEquals("Recursive Calls Submodules Module", person.history.get(0).module.name);
-      previousStateExited = person.history.get(1).exited;
-      currentStateEntered = person.history.get(0).entered;
+      assertEquals("Terminal", person.getHistory().get(0).name);
+      assertEquals("Recursive Calls Submodules Module", person.getHistory().get(0).module.name);
+      previousStateExited = person.getHistory().get(1).exited;
+      currentStateEntered = person.getHistory().get(0).entered;
       assertEquals(previousStateExited, currentStateEntered);
 
     } finally {
@@ -2072,7 +2072,7 @@ public class StateTest {
         time += Utilities.convertTime("years", 1);
       }
 
-      assertEquals(12, person.history.size());
+      assertEquals(12, person.getHistory().size());
       assertEquals(2, person.record.encounters.size());
       assertEquals(1, person.record.encounters.get(0).conditions.size());
       assertEquals(EncounterType.AMBULATORY.toString().toLowerCase(),

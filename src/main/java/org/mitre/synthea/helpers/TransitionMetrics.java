@@ -17,7 +17,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.mitre.synthea.engine.Module;
 import org.mitre.synthea.engine.Module.ModuleSupplier;
+import org.mitre.synthea.engine.State;
 import org.mitre.synthea.export.Exporter;
+import org.mitre.synthea.world.agents.Person;
 
 /**
  * Class to track state and transition metrics from the modules.
@@ -38,6 +40,24 @@ public abstract class TransitionMetrics {
   /** Whether to track the metrics */
   public static boolean enabled =
       Config.getAsBoolean("generate.track_detailed_transition_metrics", false);
+
+  /**
+   * Record a transition before the destination is added to the person's history.
+   * @param module history key
+   * @param person person being simulated
+   * @param source state being exited
+   * @param destination next state name
+   */
+  public static void recordTransition(String module,
+      Person person,
+      State source, String destination) {
+    if (!enabled) {
+      return;
+    }
+    boolean firstTime = !person.hadPriorState(destination);
+    exit(module, source.name, destination, source.exited - source.entered);
+    enter(module, destination, firstTime);
+  }
 
   /**
    * Track entering a state within a given module.

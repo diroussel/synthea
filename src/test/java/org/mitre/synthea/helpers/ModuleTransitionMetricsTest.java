@@ -27,6 +27,22 @@ public class ModuleTransitionMetricsTest {
   }
 
   @Test
+  public void disabledMetricsSkipPriorStateSearchDuringModuleProcessing() throws Exception {
+    TransitionMetrics.enabled = false;
+    Person person = new Person(1) {
+      @Override
+      public boolean hadPriorState(String name) {
+        throw new AssertionError("Disabled metrics must not search prior states");
+      }
+    };
+    person.attributes.put("advance", false);
+    Module module = TestHelper.getFixture("history_repeated_visits.json");
+    assertFalse(module.process(person, 10, false));
+    person.attributes.put("advance", true);
+    assertFalse(module.process(person, 20, false));
+  }
+
+  @Test
   public void enabledMetricsCountRepeatVisitsAndDisabledMetricsDoNotRecord() throws Exception {
     Module module = TestHelper.getFixture("history_repeated_visits.json");
     Person person = new Person(1);

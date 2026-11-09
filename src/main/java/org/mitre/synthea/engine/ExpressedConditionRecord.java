@@ -503,9 +503,9 @@ public class ExpressedConditionRecord implements Cloneable, Serializable {
    * @param time the time the condition ended
    */
   public void onConditionEnd(String module, String condition, long time) {
-    boolean isModulePresent = sources.containsKey(module);
-    if (isModulePresent) {
-      sources.get(module).endCondition(condition, time);
+    ModuleConditions moduleConditions = sources.get(module);
+    if (moduleConditions != null) {
+      moduleConditions.endCondition(condition, time);
     }
   }
 

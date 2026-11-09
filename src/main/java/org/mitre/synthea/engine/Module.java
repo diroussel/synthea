@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -43,7 +42,6 @@ import org.mitre.synthea.helpers.Config;
 import org.mitre.synthea.helpers.TransitionMetrics;
 import org.mitre.synthea.helpers.Utilities;
 import org.mitre.synthea.modules.CardiovascularDiseaseModule;
-import org.mitre.synthea.modules.EncounterModule;
 import org.mitre.synthea.modules.LifecycleModule;
 import org.mitre.synthea.modules.QualityOfLifeModule;
 import org.mitre.synthea.modules.WeightLossModule;
@@ -431,49 +429,22 @@ public class Module implements Cloneable, Serializable {
    *          : whether or not to terminate if the patient is dead
    * @return completed : whether or not this Module completed.
    */
-  @SuppressWarnings("unchecked")
   public boolean process(Person person, long time, boolean terminateOnDeath) {
     if (terminateOnDeath && !person.alive(time)) {
       return true;
     }
-    // Possibly reset wellness encounters for this module.
-    String activeKey = EncounterModule.ACTIVE_WELLNESS_ENCOUNTER + " " + this.name;
-    if (!person.attributes.containsKey(activeKey)) {
-      // "false" means the person has not entered (or is still within) a wellness encounter
-      person.attributes.put(activeKey, false);
-    }
-    person.history = null;
-    // what current state is this person in?
-    String historyKey = this.name;
-    if (this.submodule) {
-      historyKey = this.submoduleName;
-    }
-    if (!person.attributes.containsKey(historyKey)) {
-      person.history = new LinkedList<State>();
-      State initial = initialState();
-      person.history.add(initial);
-      person.attributes.put(historyKey, person.history);
-      /* TODO - determining whether or not this the first time a person has
-         entered a submodule is currently not easily computed, so we use `true` below. */
-      TransitionMetrics.enter(historyKey, initial.name, true);
-    }
-    person.history = (List<State>) person.attributes.get(historyKey);
-    State current = person.history.get(0);
+    person.ensureWellnessEncounterTracking(name);
+    String historyKey = submodule ? submoduleName : name;
+    List<State> history = person.getOrCreateHistory(historyKey, this::initialState);
+    State current = history.get(0);
     // System.out.println(" Resuming at " + current.name);
     // process the current state,
     // looping until module is finished,
     // probably more than one state
-    String nextStateName = null;
     while (current.run(person, time, terminateOnDeath)) {
-      Long entered = current.entered;
       Long exited = current.exited;
-      Long duration = (exited - entered);
-      nextStateName = current.transition(person, time);
-      boolean firstTime = !person.hadPriorState(nextStateName);
-      TransitionMetrics.exit(historyKey, current.name, nextStateName, duration);
-      current = states.get(nextStateName).clone(); // clone the state so we don't dirty the original
-      person.history.add(0, current);
-      TransitionMetrics.enter(historyKey, nextStateName, firstTime);
+      current = transitionToNextState(person, time, current, historyKey);
+      history.add(0, current);
       if (exited != null && exited < time) {
         // stop if the patient died in the meantime...
         if (terminateOnDeath && !person.alive(exited)) {
@@ -486,10 +457,17 @@ public class Module implements Cloneable, Serializable {
             return true;
           }
         }
-        current = person.history.get(0);
+        // Recursive processing advances this same history; resume its new current state.
+        current = history.get(0);
       }
     }
     return (current instanceof State.Terminal);
+  }
+
+  private State transitionToNextState(Person person, long time, State current, String historyKey) {
+    String nextStateName = current.transition(person, time);
+    TransitionMetrics.recordTransition(historyKey, person, current, nextStateName);
+    return states.get(nextStateName).clone(); // clone the state so we don't dirty the original
   }
 
   private State initialState() {

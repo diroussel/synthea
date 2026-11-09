@@ -41,14 +41,14 @@ public class PersonHistoryTest {
     try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(before))) {
       Person loaded = (Person) input.readObject();
       assertTrue(loaded.hadPriorState("Initial"));
-      assertSame(loaded.attributes.get(module.name), loaded.history);
-      assertEquals(LinkedList.class, loaded.history.getClass());
-      List<State> restored = loaded.history;
+      assertSame(loaded.attributes.get(module.name), loaded.getHistory());
+      assertEquals(LinkedList.class, loaded.getHistory().getClass());
+      List<State> restored = loaded.getHistory();
       assertFalse(module.process(loaded, 10, false));
-      assertSame(restored, loaded.history);
-      loaded.history.remove(0);
+      assertSame(restored, loaded.getHistory());
+      loaded.getHistory().remove(0);
       assertTrue(loaded.hadPriorState("Initial"));
-      loaded.history.remove(0);
+      loaded.getHistory().remove(0);
       assertFalse(loaded.hadPriorState("Initial"));
     }
   }
@@ -69,38 +69,38 @@ public class PersonHistoryTest {
     Module second = TestHelper.getFixture("history_repeated_visits.json");
     second.name = "Second Module";
     first.process(person, 10, false);
-    List<State> history = person.history;
+    List<State> history = person.getHistory();
     State current = history.get(0);
     history.add(state("Visited", 1));
     second.process(person, 10, false);
     assertFalse(person.hadPriorState("Visited"));
     first.process(person, 10, false);
-    assertSame(history, person.history);
-    assertSame(current, person.history.get(0));
+    assertSame(history, person.getHistory());
+    assertSame(current, person.getHistory().get(0));
     assertTrue(person.hadPriorState("Visited"));
-    assertEquals(3, person.history.size());
+    assertEquals(3, person.getHistory().size());
   }
 
   @Test
   public void repeatedVisitsAndListMutationsPreservePriorStateQueries() {
     Person person = new Person(1);
-    person.history = new LinkedList<>();
-    person.history.addAll(Arrays.asList(state("A", 3), state("A", 2), state("B", 1)));
-    person.history.remove(0);
+    person.setHistory(new LinkedList<>());
+    person.getHistory().addAll(Arrays.asList(state("A", 3), state("A", 2), state("B", 1)));
+    person.getHistory().remove(0);
     assertTrue(person.hadPriorState("A"));
-    person.history.set(0, state("C", 2));
+    person.getHistory().set(0, state("C", 2));
     assertFalse(person.hadPriorState("A"));
-    person.history.subList(0, 1).clear();
+    person.getHistory().subList(0, 1).clear();
     assertFalse(person.hadPriorState("C"));
-    person.history.clear();
+    person.getHistory().clear();
     assertFalse(person.hadPriorState("B"));
   }
 
   @Test
   public void boundedQueriesRespectOrderAndTime() {
     Person person = new Person(1);
-    person.history = new LinkedList<>();
-    person.history.addAll(Arrays.asList(state("B", 3), state("A", 2), state("B", 1)));
+    person.setHistory(new LinkedList<>());
+    person.getHistory().addAll(Arrays.asList(state("B", 3), state("A", 2), state("B", 1)));
     assertTrue(person.hadPriorState("A"));
     assertFalse(person.hadPriorState("A", "B", null));
     assertFalse(person.hadPriorState("A", null, 2L));

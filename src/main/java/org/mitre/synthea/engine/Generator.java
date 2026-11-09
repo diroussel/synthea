@@ -690,7 +690,7 @@ public class Generator {
       // this one might be slow to process, so only do it if the other things are true
       if (!check.isAliveButDeadRequired && !check.isDeadButAliveRequired) {
         this.keepPatientsModule.process(person, finishTime, false);
-        State terminal = person.history.get(0);
+        State terminal = person.getHistory().get(0);
         check.failedKeepModule = !terminal.name.equals("Keep");
       }
     }

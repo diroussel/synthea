@@ -171,7 +171,7 @@ public class FHIRDSTU2ExporterTest {
         .get("generate.demographics.socioeconomic.income.poverty")) * 2);
     person.attributes.put(Person.OCCUPATION_LEVEL, 1.0);
 
-    person.history = new LinkedList<>();
+    person.setHistory(new LinkedList<>());
     Provider mock = Mockito.mock(Provider.class);
     Mockito.when(mock.getResourceID()).thenReturn("Mock-UUID");
     person.setProvider(EncounterType.AMBULATORY, mock);
@@ -190,15 +190,15 @@ public class FHIRDSTU2ExporterTest {
 
     State encounter = module.getState("SomeEncounter");
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     State physiology = module.getState("Simulate_CVS");
     assertTrue(physiology.process(person, time));
-    person.history.add(physiology);
+    person.getHistory().add(physiology);
 
     State sampleObs = module.getState("SampledDataObservation");
     assertTrue(sampleObs.process(person, time));
-    person.history.add(sampleObs);
+    person.getHistory().add(sampleObs);
 
     FhirContext ctx = FhirDstu2.getContext();
     IParser parser = ctx.newJsonParser().setPrettyPrint(true);
@@ -231,7 +231,7 @@ public class FHIRDSTU2ExporterTest {
     person.attributes.put("BMI Multiplier", 0.055);
     person.setVitalSign(VitalSign.BMI, 21.0);
 
-    person.history = new LinkedList<>();
+    person.setHistory(new LinkedList<>());
     Provider mock = Mockito.mock(Provider.class);
     Mockito.when(mock.getResourceID()).thenReturn("Mock-UUID");
     person.setProvider(EncounterType.AMBULATORY, mock);
@@ -252,19 +252,19 @@ public class FHIRDSTU2ExporterTest {
 
     State physiology = module.getState("Simulate_CVS");
     assertTrue(physiology.process(person, time));
-    person.history.add(physiology);
+    person.getHistory().add(physiology);
 
     State encounter = module.getState("SomeEncounter");
     assertTrue(encounter.process(person, time));
-    person.history.add(encounter);
+    person.getHistory().add(encounter);
 
     State chartState = module.getState("ChartObservation");
     assertTrue(chartState.process(person, time));
-    person.history.add(chartState);
+    person.getHistory().add(chartState);
 
     State urlState = module.getState("UrlObservation");
     assertTrue(urlState.process(person, time));
-    person.history.add(urlState);
+    person.getHistory().add(urlState);
 
     FhirContext ctx = FhirDstu2.getContext();
     IParser parser = ctx.newJsonParser().setPrettyPrint(true);
